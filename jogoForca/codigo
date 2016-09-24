@@ -1,0 +1,154 @@
+
+
+/*   
+
+Jogo da FORCA    
+
+*/
+
+#define buzzer 11 // Define o pino onde o buzzer será conectado
+#define compasso 1500 //Altera o compasso da música
+#include "pitches.h"
+
+int erros=0, acertos, i, j;
+String segredo= "LABORATORIO DE GARAGEM"; //<-Altere nesta String a palavra secreta
+const String dica= "Onde voce encontra as melhores informacoes sobre Arduino"; //<-Altere nesta linha a dica sobre a palavra utilizada
+String tentativas = " -", test;
+char inChar;
+
+const int gameover[] = {   
+NOTE_C5,NOTE_G4,NOTE_E4,NOTE_A4,NOTE_B4,NOTE_A4,NOTE_GS4,NOTE_AS4, NOTE_GS4,   NOTE_E4,NOTE_D4,NOTE_E4
+
+};
+
+const int tempo_gameover[] = {   
+
+4,4,4,8,8,8,8,8,8,   
+12,12,4
+
+};
+
+boolean temletra=0;
+
+void setup()
+{   
+
+Serial.begin(9600);   
+DDRD = 0xFC;    
+PORTD = 0xFC;   
+delay(1000);   
+PORTD = 0x00;   
+delay(1000);   
+PORTD = 0xFF;   
+
+segredo.toUpperCase();   
+Serial.println();   
+Serial.println(" Jogo da forca");   
+Serial.println();   
+Serial.print("Dica: ");   
+Serial.println(dica);   
+Serial.println();   
+
+for (i = 0; i < segredo.length(); i++){     
+if (segredo[i] == 0x20){       
+test += " ";     
+}     
+else if(segredo[i] == 0x2D){       
+test += "- ";     
+}     
+else{       
+test += "_ ";     
+}   
+}   
+
+for (i = 0; i < (segredo.length()*2); i++)
+{     
+Serial.print(test[i]);   
+}   
+Serial.println();   
+Serial.println();
+}
+
+void loop()
+{   
+
+while (Serial.available() > 0) {     
+char caracter = Serial.read();     
+
+if(isAlphaNumeric(caracter) || isDigit(caracter)) {       
+caracter = toupper(caracter);       
+for (j = 0; j < tentativas.length(); j++){         
+if( tentativas[j] == (caracter) ){           
+temletra = 1;         
+}       
+}       
+
+if (temletra == 1)       
+{         
+Serial.println("Letra ja digitada");         
+temletra = 0;       
+}       
+
+else       
+{         
+tentativas += caracter;                  
+
+if(segredo.indexOf(caracter) <0 ){           
+erros++;         
+}         
+
+acertos = 0;         
+
+for (j = 0; j < tentativas.length(); j++){           
+for (i = 0; i < segredo.length(); i++){             
+if( segredo[i]== tentativas[j]){               
+test[i*2]=  segredo[i];               
+acertos++;             
+}           
+}         
+}          
+
+Serial.print("ERROS: ");         
+Serial.println(erros);         
+Serial.println();         
+
+//###########################################################
+        
+// imprime letras na tela         
+for ( i = 0; i < (segredo.length()*2); i++){           
+Serial.print(test[i]);         
+}         
+Serial.println();         
+Serial.println();       
+}      
+}     
+
+else {       
+Serial.println("Digite um caracter valido");       
+Serial.println();     
+}     
+
+//Atualiza LEDs que indicam os erros     
+PORTD = 0xFF << (erros +2);     
+
+if (acertos == segredo.length()){       
+Serial.println("Voce venceu!!!");       
+while(1){       
+}     
+}     
+
+if (erros >=6){       
+Serial.println("GAME OVER");       //Toca musica de GAME OVER       
+for (int Nota = 0; Nota < 12; Nota++) {         
+int tempo = compasso/tempo_gameover[Nota];         
+tone(11, gameover[Nota],tempo);         
+delay(tempo*1.2);       
+}       
+while(1){       
+}     
+}   
+}
+}
+
+ 
+
